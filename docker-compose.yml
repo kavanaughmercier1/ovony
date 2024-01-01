@@ -1,0 +1,81 @@
+version: "3.9"
+networks:
+  default:
+    name: node_network
+services:
+  host:
+    networks:
+      - default
+    ports:
+      - "80:80"
+      - "81:81"
+      - "6061:6061"
+      - "10000:10000"
+    environment:
+      - MGMTCONTRACTADDR=some_address
+      - PKSTRING=some_string
+      - L1HOST=some_host
+      - L1PORT=some_port
+      - ISGENESIS=some_bool
+      - NODETYPE=some_string
+      - PROFILERENABLED=some_bool
+      - P2PPUBLICADDRESS=some_string
+      - LOGLEVEL=some_int
+    image: testnetobscuronet.azurecr.io/obscuronet/host:latest
+    entrypoint: [
+      "/home/obscuro/go-obscuro/go/host/main/main",
+      "--l1NodeHost=$L1HOST",
+      "--l1NodePort=$L1PORT",
+      "--enclaveRPCAddress=enclave:11000",
+      "--managementContractAddress=$MGMTCONTRACTADDR",
+      "--messageBusContractAddress=$MSGBUSCONTRACTADDR",
+      "--privateKey=$PKSTRING",
+      "--clientRPCHost=0.0.0.0",
+      "--isGenesis=$ISGENESIS",
+      "--nodeType=$NODETYPE",
+      "--logLevel=$LOGLEVEL",
+      "--logPath=sys_out",
+      "--profilerEnabled=$PROFILERENABLED",
+      "--p2pPublicAddress=$P2PPUBLICADDRESS",
+      "--sequencerID=$SEQUENCERID"
+    ]
+
+  enclave:
+    networks:
+      - default
+    ports:
+      - "6060:6060"
+      - "2345:2345"
+      - "11000:11000"
+    environment:
+      - MGMTCONTRACTADDR=some_address
+      - HOSTID=some_address
+      - NODETYPE=some_string
+      - PROFILERENABLED=some_bool
+      - P2PPUBLICADDRESS=some_string
+      - LOGLEVEL=some_int
+      - SEQUENCERID=some_address
+    image: testnetobscuronet.azurecr.io/obscuronet/enclave_debug:latest
+    entrypoint: [
+      "dlv",
+      "--listen=:2345",
+      "--headless=true",
+      "--log=true",
+      "--api-version=2",
+      "debug",
+      "/home/obscuro/go-obscuro/go/enclave/main",
+      "--",
+      "--hostID=$HOSTID",
+      "--address=0.0.0.0:11000",
+      "--nodeType=$NODETYPE",
+      "--useInMemoryDB=false",
+      "--sqliteDBPath=/data/sqlite.db",
+      "--managementContractAddress=$MGMTCONTRACTADDR",
+      "--hostAddress=host:10000",
+      "--profilerEnabled=$PROFILERENABLED",
+      "--hostAddress=$P2PPUBLICADDRESS",
+      "--logPath=sys_out",
+      "--logLevel=$LOGLEVEL",
+      "--sequencerID=$SEQUENCERID",
+      "--messageBusAddress=$MSGBUSCONTRACTADDR"
+    ]
